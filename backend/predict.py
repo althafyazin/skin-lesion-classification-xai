@@ -1,17 +1,38 @@
 import numpy as np
 
+# ⚠️ MUST MATCH TRAINING LABEL ORDER EXACTLY
 CLASS_NAMES = ["AKIEC", "BCC", "BKL", "DF", "MEL", "NV", "VASC"]
 
-def predict_image(model, img_tensor):
-    preds = model.predict([img_tensor, img_tensor])[0]
+CONFIDENCE_THRESHOLD = 0.70
 
-    idx = int(np.argmax(preds))
-    predicted_class = CLASS_NAMES[idx]
-    confidence = float(np.max(preds)) * 100
+
+def predict_image(model, img_tensor):
+    """
+    Returns:
+    predicted_class (str)
+    confidence (float)
+    probabilities (dict)
+    pred_index (int or None)
+    """
+
+    # Ensemble model → needs TWO identical inputs
+    preds = model.predict([img_tensor, img_tensor], verbose=0)[0]
+
+    pred_index = int(np.argmax(preds))
+    confidence = float(preds[pred_index])
 
     probabilities = {
-        CLASS_NAMES[i]: float(preds[i]) * 100
+        CLASS_NAMES[i]: float(preds[i])
         for i in range(len(CLASS_NAMES))
     }
 
-    return predicted_class, confidence, probabilities, idx
+    # -------- OOD rejection --------
+    if confidence < CONFIDENCE_THRESHOLD:
+        return (
+            "UNKNOWN",
+            confidence,
+            probabilities,
+            None
+        )
+
+    return CLASS_NAMES[pred_index], confidence, probabilities, pred_index

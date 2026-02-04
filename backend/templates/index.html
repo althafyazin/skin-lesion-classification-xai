@@ -1,83 +1,217 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Skin Lesion Classification</title>
+    <meta charset="UTF-8">
+    <title>Skin Cancer Detection System</title>
 
     <style>
         body {
-            font-family: Arial, sans-serif;
-            margin: 40px;
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: #f4f6f8;
+            margin: 0;
+            padding: 0;
         }
-        img {
-            width: 300px;
+
+        .container {
+            max-width: 1000px;
+            margin: 40px auto;
+            background: #ffffff;
+            padding: 30px 40px;
+            border-radius: 10px;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+        }
+
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 15px;
+        }
+
+        .upload-box {
+            border: 2px dashed #cfd8dc;
+            padding: 25px;
+            text-align: center;
+            border-radius: 8px;
+            background: #fafafa;
+        }
+
+        input[type="file"] {
             margin-top: 10px;
-            display: block;
         }
+
+        button {
+            margin-top: 15px;
+            padding: 10px 22px;
+            font-size: 15px;
+            background: #2d89ef;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #1b5fc6;
+        }
+
+        hr {
+            margin: 35px 0;
+            border: none;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .result-box {
+            background: #f9fbfc;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 5px solid #2d89ef;
+        }
+
+        .confidence {
+            font-weight: bold;
+            color: #27ae60;
+        }
+
         table {
+            width: 100%;
             border-collapse: collapse;
-            margin-top: 10px;
+            margin-top: 15px;
         }
-        th, td {
-            border: 1px solid #ccc;
-            padding: 6px 12px;
+
+        th {
+            background: #2d89ef;
+            color: white;
+            padding: 10px;
+        }
+
+        td {
+            padding: 8px;
+            border-bottom: 1px solid #ddd;
             text-align: center;
         }
-        button {
-            padding: 8px 16px;
+
+        .explain-section {
+            margin-top: 30px;
+        }
+
+        .explain-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+        }
+
+        .explain-card {
+            background: #ffffff;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+            text-align: center;
+        }
+
+        .explain-card img {
+            width: 100%;
+            max-width: 320px;
+            border-radius: 6px;
             margin-top: 10px;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            font-size: 13px;
+            color: #888;
+        }
+
+        @media (max-width: 800px) {
+            .explain-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 
 <body>
 
-<h2>Skin Lesion Classification</h2>
+<div class="container">
 
-<form method="POST" enctype="multipart/form-data">
-    <input type="file" name="image" required>
-    <br><br>
-    <button type="submit">Predict</button>
-</form>
+    <h1>Skin Cancer Detection System</h1>
+    <div class="subtitle">
+        CNN-based Skin Lesion Classification with Explainable AI
+    </div>
 
-{% if show_result %}
-<hr>
+    <form method="POST" enctype="multipart/form-data">
+        <div class="upload-box">
+            <p><b>Upload a dermoscopic skin lesion image</b></p>
+            <input type="file" name="image" accept="image/*" required>
+            <br>
+            <button type="submit">Predict</button>
+        </div>
+    </form>
 
-<h3>Prediction Result</h3>
-<p><b>Predicted Class:</b> {{ predicted_class }}</p>
-<p><b>Confidence:</b> {{ confidence }}%</p>
+    {% if show_result %}
+    <hr>
 
-<h4>Class-wise Probabilities</h4>
-<table>
-    <tr>
-        <th>Class</th>
-        <th>Probability (%)</th>
-    </tr>
-    {% for cls, prob in probabilities.items() %}
-    <tr>
-        <td>{{ cls }}</td>
-        <td>{{ "%.2f"|format(prob) }}</td>
-    </tr>
-    {% endfor %}
-</table>
+    <div class="result-box">
+        <p><b>Predicted Class:</b> {{ predicted_class }}</p>
+        <p class="confidence">
+            Confidence: {{ (confidence * 100) | round(2) }} %
+        </p>
+    </div>
 
-<hr>
+    <h3>Class-wise Probabilities</h3>
+    <table>
+        <tr>
+            <th>Class</th>
+            <th>Probability (%)</th>
+        </tr>
+        {% for cls, prob in probabilities.items() %}
+        <tr>
+            <td>{{ cls }}</td>
+            <td>{{ (prob * 100) | round(4) }}</td>
+        </tr>
+        {% endfor %}
+    </table>
 
-<h3>Explainability</h3>
+    <div class="explain-section">
+        <h2>Explainable AI Analysis</h2>
 
-<h4>Grad-CAM (CNN Attention)</h4>
-<img src="/static/gradcam.png">
+        <div class="explain-grid">
 
-<h4>LIME (Local Explanation)</h4>
-<img src="/static/lime.png">
+            <div class="explain-card">
+                <h3>Grad-CAM</h3>
+                <img src="/static/gradcam.png">
+                <p>Model attention regions influencing the decision.</p>
+            </div>
 
-<p style="margin-top:20px; font-size: 14px; color: #555;">
-    <i>
-        SHAP explanations are implemented offline due to high computational cost
-        and are not generated during real-time inference.
-    </i>
-</p>
+            <div class="explain-card">
+                <h3>LIME (Baseline)</h3>
+                <img src="/static/lime.png">
+                <p>Local superpixel-based explanation.</p>
+            </div>
 
-{% endif %}
+            <div class="explain-card">
+                <h3>Lesion-Aware LIME (Modified)</h3>
+                <img src="/static/lesion_lime.png">
+                <p>{{ lesion_text }}</p>
+            </div>
+
+        </div>
+    </div>
+
+    {% endif %}
+
+    <footer>
+        Academic use only. Not a medical diagnosis.
+    </footer>
+
+</div>
 
 </body>
 </html>
